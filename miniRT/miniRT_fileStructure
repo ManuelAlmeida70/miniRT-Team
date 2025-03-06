@@ -26,6 +26,9 @@ miniRT/
 │   ├── render/          (Rendering)
 │   │   ├── render.c
 │   │   └── lighting.c
+│   ├── scene/          (scene)
+│   │   ├── scene.c
+│   │   
 │   └── utils/           (Utilities)
 │       ├── color.c
 │       └── error.c
