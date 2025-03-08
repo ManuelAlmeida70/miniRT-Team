@@ -60,6 +60,21 @@ void    object_free(t_object *obj);
 t_vec3  object_get_normal(void  *obj, int type, t_vec3 point);
 t_color object_get_color(void   *obj, int type);
 
+// SPHERE
+t_vec3      sphere_get_normal(t_sphere *sphere, t_vec3 point);
+void        sphere_translate(t_sphere *sphere, t_vec3 translation);
+void        sphere_rotate(t_sphere *sphere, t_vec3 rotation);
+
+// PLANE
+t_vec3      plane_get_normal(t_plane *plane, t_vec3 point);
+void        plane_translate(t_plane *plane, t_vec3 translation);
+void        plane_rotate(t_plane *plane, t_vec3 rotation);
+
+// CYLINDER
+t_vec3      cylinder_get_normal(t_cylinder *cylinder, t_vec3 point);
+void        cylinder_translate(t_cylinder *cylinder, t_vec3 translation);
+void        cylinder_rotate(t_cylinder *cylinder, t_vec3 rotation);
+
 // Object transformation function
 void    object_translate(t_object *obj, t_vec3 translation);
 void    object_rotate(t_object *obj, t_vec3 rotation);
