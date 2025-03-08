@@ -6,72 +6,65 @@
 /*   By: maalmeid <maalmeid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/27 09:49:32 by nkiampav          #+#    #+#             */
-/*   Updated: 2025/03/07 07:58:07 by maalmeid         ###   ########.fr       */
+/*   Updated: 2025/03/08 14:27:54 by nkiampav         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/minirt.h"
 
-// Verifica se um ponto está dentro da esfera
-bool sphere_contains_point(t_sphere *sphere, t_vec3 point)
+/**
+ * Creates a new sphere object
+ * @param center Center point of the sphere
+ * @param diameter Diameter of the sphere
+ * @param color Color of the sphere
+ * @return Pointer to the newly created sphere
+ */
+t_sphere	*sphere_create(t_vec3 center, double diameter, t_color color)
 {
-    // Distância do ponto ao centro da esfera
-    double distance = vec3_length(vec3_subtract(point, sphere->center));
-    
-    // Verifica se a distância é menor ou igual ao raio
-    return (distance <= sphere->diameter / 2.0);
+	t_sphere	*sphere;
+
+	sphere = (t_sphere *)malloc(sizeof(t_sphere));
+	if (!sphere)
+		return (NULL);
+	sphere->center = center;
+	sphere->diameter = diameter;
+	sphere->color = color;
+	return (sphere);
 }
 
-// Calcula a normal da esfera em um ponto
-t_vec3 sphere_normal_at(t_sphere *sphere, t_vec3 point)
+/**
+ * Gets the normal vector at a point on a sphere
+ * @param sphere Pointer to the sphere
+ * @param point Point on the sphere
+ * @return Normal vector at the point
+ */
+t_vec3	sphere_get_normal(t_sphere *sphere, t_vec3 point)
 {
-    // Normal é o vetor do centro da esfera ao ponto, normalizado
-    return (vec3_normalize(vec3_subtract(point, sphere->center)));
+	t_vec3	normal;
+
+	// Calculate normal vector (direction from center to point)
+	normal = vec3_sub(point, sphere->center);
+	return (vec3_normalize(normal));
 }
 
-// Verificação de interseção do raio com a esfera
-bool sphere_intersect(t_sphere *sphere, t_vec3 ray_origin, t_vec3 ray_direction, double *t)
+/**
+ * Translates a sphere by a given vector
+ * @param sphere Pointer to the sphere
+ * @param translation Translation vector
+ */
+void	sphere_translate(t_sphere *sphere, t_vec3 translation)
 {
-    // Vetor do centro da esfera à origem do raio
-    t_vec3 oc = vec3_subtract(ray_origin, sphere->center);
-    
-    // Cálculos para a equação quadrática de interseção
-    double a = vec3_dot(ray_direction, ray_direction);
-    double b = 2.0 * vec3_dot(oc, ray_direction);
-    double c = vec3_dot(oc, oc) - pow(sphere->diameter / 2.0, 2);
-    
-    // Discriminante
-    double discriminant = b * b - 4 * a * c;
-    
-    // Sem interseção
-    if (discriminant < 0)
-        return (false);
-    
-    // Calcula as duas possíveis soluções
-    double sqrt_disc = sqrt(discriminant);
-    double t0 = (-b - sqrt_disc) / (2.0 * a);
-    double t1 = (-b + sqrt_disc) / (2.0 * a);
-    
-    // Garante que t0 seja o primeiro ponto de interseção
-    if (t0 > t1)
-    {
-        double temp = t0;
-        t0 = t1;
-        t1 = temp;
-    }
-    
-    // Retorna o primeiro ponto de interseção válido
-    if (t0 >= 0)
-    {
-        *t = t0;
-        return (true);
-    }
-    
-    if (t1 >= 0)
-    {
-        *t = t1;
-        return (true);
-    }
-    
-    return (false);
+	sphere->center = vec3_add(sphere->center, translation);
+}
+
+/**
+ * Rotating a sphere doesn't change its appearance
+ * @param sphere Pointer to the sphere
+ * @param rotation Rotation vector (unused)
+ */
+void	sphere_rotate(t_sphere *sphere, t_vec3 rotation)
+{
+	// Spheres look the same when rotated, so do nothing
+	(void)sphere;
+	(void)rotation;
 }
