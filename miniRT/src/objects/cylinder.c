@@ -12,94 +12,90 @@
 
 # include "../../includes/minirt.h"
 
-// Verifica se um ponto está dentro do cilindro
-bool cylinder_contains_point(t_cylinder *cylinder, t_vec3 point)
+/**
+ * Creates a new cylinder object
+ * @param center Center point of the cylinder
+ * @param axis Direction vector of the cylinder's axis
+ * @param diameter Diameter of the cylinder
+ * @param height Height of the cylinder
+ * @param color Color of the cylinder
+ * @return Pointer to the newly created cylinder
+ */
+t_cylinder	*cylinder_create(t_vec3 center, t_vec3 axis, double diameter, double height, t_color color)
 {
-    // Vetor do centro ao ponto
-    t_vec3 center_to_point = vec3_subtract(point, cylinder->center);
-    
-    // Projeção do ponto no eixo do cilindro
-    double proj_length = vec3_dot(center_to_point, cylinder->axis);
-    
-    // Verifica se o ponto está dentro da altura do cilindro
-    if (proj_length < 0 || proj_length > cylinder->height)
-        return (false);
-    
-    // Distância do ponto ao eixo do cilindro
-    t_vec3 proj = vec3_multiply(cylinder->axis, proj_length);
-    t_vec3 dist_from_axis = vec3_subtract(center_to_point, proj);
-    
-    // Verifica se a distância está dentro do raio do cilindro
-    return (vec3_length(dist_from_axis) <= cylinder->diameter / 2.0);
+	t_cylinder	*cylinder;
+
+	cylinder = (t_cylinder *)malloc(sizeof(t_cylinder));
+	if (!cylinder)
+		return (NULL);
+	cylinder->center = center;
+	cylinder->axis = vec3_normalize(axis);	// Ensure axis is normalized
+	cylinder->diameter = diameter;
+	cylinder->height = height;
+	cylinder->color = color;
+	return (cylinder);
 }
 
-// Calcula a normal de um ponto na superfície do cilindro
-t_vec3 cylinder_normal_at(t_cylinder *cylinder, t_vec3 point)
+/**
+ * Gets the normal vector at a point on a cylinder
+ * @param cylinder Pointer to the cylinder
+ * @param point Point on the cylinder
+ * @return Normal vector at the point
+ */
+t_vec3	cylinder_get_normal(t_cylinder *cylinder, t_vec3 point)
 {
-    // Vetor do centro ao ponto
-    t_vec3 center_to_point = vec3_subtract(point, cylinder->center);
-    
-    // Projeção do ponto no eixo do cilindro
-    double proj_length = vec3_dot(center_to_point, cylinder->axis);
-    t_vec3 proj = vec3_multiply(cylinder->axis, proj_length);
-    
-    // Vetor do eixo ao ponto
-    t_vec3 normal = vec3_subtract(center_to_point, proj);
-    
-    return (vec3_normalize(normal));
+	t_vec3	center_to_point;
+	t_vec3	axis_projection;
+	double	projection_length;
+	t_vec3	normal;
+	t_vec3	cap_center;
+	double	distance_to_axis;
+
+	// Vector from center to point
+	center_to_point = vec3_sub(point, cylinder->center);
+
+	// Project this vector onto the axis
+	projection_length = vec3_dot(center_to_point, cylinder->axis);
+
+	// Check if point is on one of the caps (within radius from cap center)
+	if (fabs(projection_length) >= cylinder->height / 2.0)
+	{
+		// Point is on one of the caps
+		if (projection_length > 0)
+			return (cylinder->axis);	// Top cap, normal is axis
+		else
+			return (vec3_scale(cylinder->axis, -1.0));	// Bottom cap, normal is negative axis
+	}
+
+	// Point is on the side surface
+	// Calculate projection of center to point onto axis
+	axis_projection = vec3_scale(cylinder->axis, projection_length);
+
+	// Normal is from axis to point
+	normal = vec3_sub(center_to_point, axis_projection);
+	return (vec3_normalize(normal));
 }
 
-// Verificação de interseção do raio com o cilindro
-bool cylinder_intersect(t_cylinder *cylinder, t_vec3 ray_origin, t_vec3 ray_direction, double *t)
+/**
+ * Translates a cylinder by a given vector
+ * @param cylinder Pointer to the cylinder
+ * @param translation Translation vector
+ */
+void	cylinder_translate(t_cylinder *cylinder, t_vec3 translation)
 {
-    // Implementação simplificada de intersecção de raio com cilindro
-    // Esta é uma versão básica e pode precisar de refinamentos
-    
-    t_vec3 oc = vec3_subtract(ray_origin, cylinder->center);
-    
-    double a = vec3_dot(ray_direction, ray_direction) - 
-               pow(vec3_dot(ray_direction, cylinder->axis), 2);
-    double b = 2.0 * (vec3_dot(ray_direction, oc) - 
-                      vec3_dot(ray_direction, cylinder->axis) * 
-                      vec3_dot(oc, cylinder->axis));
-    double c = vec3_dot(oc, oc) - 
-               pow(vec3_dot(oc, cylinder->axis), 2) - 
-               pow(cylinder->diameter / 2.0, 2);
-    
-    double discriminant = b * b - 4 * a * c;
-    
-    if (discriminant < 0)
-        return (false);
-    
-    double sqrt_disc = sqrt(discriminant);
-    double t0 = (-b - sqrt_disc) / (2.0 * a);
-    double t1 = (-b + sqrt_disc) / (2.0 * a);
-    
-    if (t0 > t1)
-    {
-        double temp = t0;
-        t0 = t1;
-        t1 = temp;
-    }
-    
-    // Verificar limites de altura do cilindro
-    t_vec3 hit_point0 = vec3_add(ray_origin, vec3_multiply(ray_direction, t0));
-    t_vec3 hit_point1 = vec3_add(ray_origin, vec3_multiply(ray_direction, t1));
-    
-    double proj0 = vec3_dot(vec3_subtract(hit_point0, cylinder->center), cylinder->axis);
-    double proj1 = vec3_dot(vec3_subtract(hit_point1, cylinder->center), cylinder->axis);
-    
-    if (proj0 >= 0 && proj0 <= cylinder->height)
-    {
-        *t = t0;
-        return (true);
-    }
-    
-    if (proj1 >= 0 && proj1 <= cylinder->height)
-    {
-        *t = t1;
-        return (true);
-    }
-    
-    return (false);
+	cylinder->center = vec3_add(cylinder->center, translation);
+}
+
+/**
+ * Rotates a cylinder by a given rotation vector
+ * @param cylinder Pointer to the cylinder
+ * @param rotation Rotation vector (in radians)
+ */
+void	cylinder_rotate(t_cylinder *cylinder, t_vec3 rotation)
+{
+	// Rotate axis vector
+	cylinder->axis = vec3_rotate_x(cylinder->axis, rotation.x);
+	cylinder->axis = vec3_rotate_y(cylinder->axis, rotation.y);
+	cylinder->axis = vec3_rotate_z(cylinder->axis, rotation.z);
+	cylinder->axis = vec3_normalize(cylinder->axis);
 }
