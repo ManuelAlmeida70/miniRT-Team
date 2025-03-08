@@ -52,7 +52,7 @@ t_vec3	cylinder_get_normal(t_cylinder *cylinder, t_vec3 point)
 	double	distance_to_axis;
 
 	// Vector from center to point
-	center_to_point = vec3_sub(point, cylinder->center);
+	center_to_point = vec3_subtract(point, cylinder->center);
 
 	// Project this vector onto the axis
 	projection_length = vec3_dot(center_to_point, cylinder->axis);
@@ -72,7 +72,7 @@ t_vec3	cylinder_get_normal(t_cylinder *cylinder, t_vec3 point)
 	axis_projection = vec3_scale(cylinder->axis, projection_length);
 
 	// Normal is from axis to point
-	normal = vec3_sub(center_to_point, axis_projection);
+	normal = vec3_subtract(center_to_point, axis_projection);
 	return (vec3_normalize(normal));
 }
 
