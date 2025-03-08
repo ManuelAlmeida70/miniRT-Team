@@ -43,20 +43,26 @@ endif
 # Math library
 MATHFLAGS	= -lm
 
-# Source files
-SRC_DIRS	= main parser vector ray render objects scene utils color
+# Source files - adjusted to match your actual directory structure
+SRC_DIRS	= main parser vector ray render objects scene utils
 SRCS		= $(foreach dir,$(SRC_DIRS),$(wildcard $(SRC_DIR)/$(dir)/*.c))
 OBJS		= $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 # Header files
 INCS		= $(wildcard $(INC_DIR)/*.h)
 
-# Libft (if needed)
+# Libft
 LIBFT_DIR	= libft
 LIBFT		= $(LIBFT_DIR)/libft.a
+LIBFT_FLAGS	= -L$(LIBFT_DIR) -lft
 
 # Rules
-all: $(MINILIBX_DIR)/libmlx.a $(NAME)
+all: $(LIBFT) $(MINILIBX_DIR)/libmlx.a $(NAME)
+
+# Rule to build libft
+$(LIBFT):
+	@echo "🔨 Compiling libft..."
+	@make -C $(LIBFT_DIR)
 
 $(MINILIBX_DIR)/libmlx.a:
 	@echo "🔨 Compiling MinilibX..."
@@ -64,19 +70,20 @@ $(MINILIBX_DIR)/libmlx.a:
 
 $(NAME): $(OBJS)
 	@echo "🔨 Compiling $(NAME)..."
-	@$(CC) $(CFLAGS) -I$(INC_DIR) -I$(MINILIBX_DIR) $(OBJS) -o $(NAME) $(MLXFLAGS) $(MATHFLAGS)
+	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(LIBFT_FLAGS) $(MLXFLAGS) $(MATHFLAGS)
 	@echo "✅ Compilation complete!"
 
 # Compile source files to object files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(INCS)
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -I$(INC_DIR) -I$(MINILIBX_DIR) -c $< -o $@
+	@$(CC) $(CFLAGS) -I$(INC_DIR) -I$(MINILIBX_DIR) -I$(LIBFT_DIR) -c $< -o $@
 
 # Clean object files
 clean:
 	@echo "🧹 Cleaning object files..."
 	@rm -rf $(OBJ_DIR)
-	@if [ -f $(MINILIBX_DIR)/Makefile ]; then \
+	@make -C $(LIBFT_DIR) clean
+	@if [ -d $(MINILIBX_DIR) ] && [ -f $(MINILIBX_DIR)/Makefile ]; then \
 		make -C $(MINILIBX_DIR) clean; \
 	fi
 	@echo "✅ Object files cleaned!"
@@ -85,9 +92,7 @@ clean:
 fclean: clean
 	@echo "🧹 Removing executable..."
 	@rm -f $(NAME)
-	@if [ -f $(MINILIBX_DIR)/Makefile ]; then \
-		make -C $(MINILIBX_DIR) clean; \
-	fi
+	@make -C $(LIBFT_DIR) fclean
 	@echo "✅ Executable removed!"
 
 # Rebuild
