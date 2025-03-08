@@ -12,36 +12,59 @@
 
 #include "../../includes/minirt.h"
 
-
-// Verifica se um ponto está no plano (dentro de uma tolerância)
-bool plane_contains_point(t_plane *plane, t_vec3 point)
+/**
+ * Creates a new plane object
+ * @param point Point on the plane
+ * @param normal Normal vector of the plane
+ * @param color Color of the plane
+ * @return Pointer to the newly created plane
+ */
+t_plane	*plane_create(t_vec3 point, t_vec3 normal, t_color color)
 {
-    // Distância do ponto ao plano
-    double distance = fabs(vec3_dot(vec3_subtract(point, plane->point), plane->normal));
-    
-    // Tolerância pequena para imprecisões de ponto flutuante
-    return (distance < 1e-6);
+	t_plane	*plane;
+
+	plane = (t_plane *)malloc(sizeof(t_plane));
+	if (!plane)
+		return (NULL);
+	plane->point = point;
+	plane->normal = vec3_normalize(normal);	// Ensure normal is normalized
+	plane->color = color;
+	return (plane);
 }
 
-// Calcula a normal do plano (que é constante)
-t_vec3 plane_normal_at(t_plane *plane, t_vec3 point)
+
+/**
+ * Gets the normal vector at a point on a plane
+ * @param plane Pointer to the plane
+ * @param point Point on the plane (unused)
+ * @return Normal vector of the plane
+ */
+t_vec3	plane_get_normal(t_plane *plane, t_vec3 point)
 {
-    // A normal de um plano é sempre a mesma, independente do ponto
-    return (plane->normal);
+	(void)point;	// Plane normal is same at all points
+	return (plane->normal);
 }
 
-// Verificação de interseção do raio com o plano
-bool plane_intersect(t_plane *plane, t_vec3 ray_origin, t_vec3 ray_direction, double *t)
+/**
+ * Translates a plane by a given vector
+ * @param plane Pointer to the plane
+ * @param translation Translation vector
+ */
+void	plane_translate(t_plane *plane, t_vec3 translation)
 {
-    // Cálculo de interseção de raio com plano
-    double denom = vec3_dot(ray_direction, plane->normal);
-    
-    // Se o raio for paralelo ao plano
-    if (fabs(denom) < 1e-6)
-        return (false);
-    
-    *t = vec3_dot(vec3_subtract(plane->point, ray_origin), plane->normal) / denom;
-    
-    // Retorna verdadeiro se a interseção está à frente da origem do raio
-    return (*t >= 0);
+	plane->point = vec3_add(plane->point, translation);
+}
+
+/**
+ * Rotates a plane by a given rotation vector
+ * @param plane Pointer to the plane
+ * @param rotation Rotation vector (in radians)
+ */
+void	plane_rotate(t_plane *plane, t_vec3 rotation)
+{
+	// Rotate normal vector
+	plane->normal = vec3_rotate_x(plane->normal, rotation.x);
+	plane->normal = vec3_rotate_y(plane->normal, rotation.y);
+	plane->normal = vec3_rotate_z(plane->normal, rotation.z);
+	plane->normal = vec3_normalize(plane->normal);
 }
